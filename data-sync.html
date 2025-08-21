@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline Questionnaire</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .status-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .status-online {
+            background: #00d2ff;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        .status-offline {
+            background: #ff4757;
+            color: white;
+        }
+
+        .status-syncing {
+            background: #ffa502;
+            color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .form-container {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 10px 15px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .radio-item:hover {
+            background: #f0f0f0;
+        }
+
+        input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #667eea;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .queue-status {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #1976d2;
+        }
+
+        .success-message {
+            background: #e8f5e8;
+            border-left: 4px solid #4caf50;
+            color: #2e7d32;
+        }
+
+        .error-message {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            color: #c62828;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                margin: 10px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .form-container {
+                padding: 20px;
+            }
+            
+            .radio-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="status-indicator" id="statusIndicator">Online</div>
+            <h1>Customer Feedback Survey</h1>
+            <p>Your feedback helps us improve our services</p>
+        </div>
+        
+        <div class="form-container">
+            <form id="questionnaireForm">
+                <div class="form-group">
+                    <label for="name">Full Name *</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address *</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" name="phone">
+                </div>
+
+                <div class="form-group">
+                    <label for="age">Age Group</label>
+                    <select id="age" name="age">
+                        <option value="">Select Age Group</option>
+                        <option value="18-25">18-25</option>
+                        <option value="26-35">26-35</option>
+                        <option value="36-45">36-45</option>
+                        <option value="46-55">46-55</option>
+                        <option value="55+">55+</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Overall Satisfaction *</label>
+                    <div class="radio-group">
+                        <div class="radio-item">
+                            <input type="radio" id="excellent" name="satisfaction" value="excellent" required>
+                            <label for="excellent">Excellent</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="good" name="satisfaction" value="good">
+                            <label for="good">Good</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="average" name="satisfaction" value="average">
+                            <label for="average">Average</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="poor" name="satisfaction" value="poor">
+                            <label for="poor">Poor</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="comments">Additional Comments</label>
+                    <textarea id="comments" name="comments" placeholder="Share your thoughts and suggestions..."></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    Submit Feedback
+                </button>
+            </form>
+
+            <div id="statusMessage" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - Replace with your Google Apps Script Web App URL
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwaPA6--0679XTb0opSxTPt0mG8hMpaHHIDpTP58yxGH0Ad48Kwih7hk8QN04NK6fXt/exec';
+        
+        // App state
+        let isOnline = navigator.onLine;
+        let isSyncing = false;
+        const QUEUE_KEY = 'questionnaire_queue';
+        
+        // DOM elements
+        const form = document.getElementById('questionnaireForm');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusMessage = document.getElementById('statusMessage');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            updateConnectionStatus();
+            loadQueueStatus();
+            
+            // Set up event listeners
+            window.addEventListener('online', handleOnline);
+            window.addEventListener('offline', handleOffline);
+            form.addEventListener('submit', handleSubmit);
+        });
+
+        // Connection status handlers
+        function handleOnline() {
+            isOnline = true;
+            updateConnectionStatus();
+            processQueue();
+        }
+
+        function handleOffline() {
+            isOnline = false;
+            updateConnectionStatus();
+        }
+
+        function updateConnectionStatus() {
+            const indicator = statusIndicator;
+            
+            if (isSyncing) {
+                indicator.className = 'status-indicator status-syncing';
+                indicator.textContent = 'Syncing';
+            } else if (isOnline) {
+                indicator.className = 'status-indicator status-online';
+                indicator.textContent = 'Online';
+            } else {
+                indicator.className = 'status-indicator status-offline';
+                indicator.textContent = 'Offline';
+            }
+        }
+
+        // Form submission handler
+        async function handleSubmit(e) {
+            e.preventDefault();
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+
+            const formData = new FormData(form);
+            const data = {
+                timestamp: new Date().toISOString(),
+                name: formData.get('name'),
+                email: formData.get('email'),
+                phone: formData.get('phone') || '',
+                age: formData.get('age') || '',
+                satisfaction: formData.get('satisfaction'),
+                comments: formData.get('comments') || ''
+            };
+
+            try {
+                if (isOnline) {
+                    // Try to submit directly to Google Sheets
+                    await submitToGoogleSheets(data);
+                    showMessage('✅ Feedback submitted successfully!', 'success');
+                    form.reset();
+                } else {
+                    // Store in local queue
+                    addToQueue(data);
+                    showMessage('📝 Feedback saved locally. Will sync when online.', 'info');
+                    form.reset();
+                }
+            } catch (error) {
+                console.error('Submission error:', error);
+                
+                if (isOnline) {
+                    // If online but failed, add to queue as fallback
+                    addToQueue(data);
+                    showMessage('⚠️ Saved locally due to connection issue. Will retry automatically.', 'info');
+                    form.reset();
+                } else {
+                    showMessage('❌ Error saving feedback. Please try again.', 'error');
+                }
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Feedback';
+            }
+        }
+
+        // Google Sheets submission
+        async function submitToGoogleSheets(data) {
+            if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes('YOUR_GOOGLE')) {
+                throw new Error('Google Apps Script URL not configured');
+            }
+
+            // Check if running locally
+            if (window.location.protocol === 'file:') {
+                throw new Error('Cannot sync from file:// protocol. Please use a web server.');
+            }
+
+            const response = await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            return response.json();
+        }
+
+        // Queue management
+        function addToQueue(data) {
+            const queue = getQueue();
+            queue.push(data);
+            localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+            loadQueueStatus();
+        }
+
+        function getQueue() {
+            const stored = localStorage.getItem(QUEUE_KEY);
+            return stored ? JSON.parse(stored) : [];
+        }
+
+        function clearQueue() {
+            localStorage.removeItem(QUEUE_KEY);
+            loadQueueStatus();
+        }
+
+        function loadQueueStatus() {
+            const queue = getQueue();
+            
+            if (queue.length > 0) {
+                showMessage(`📋 ${queue.length} feedback(s) waiting to sync`, 'info');
+            }
+        }
+
+        // Background sync process
+        async function processQueue() {
+            const queue = getQueue();
+            
+            if (queue.length === 0 || !isOnline) return;
+
+            isSyncing = true;
+            updateConnectionStatus();
+
+            const successfulSubmissions = [];
+            
+            for (let i = 0; i < queue.length; i++) {
+                try {
+                    await submitToGoogleSheets(queue[i]);
+                    successfulSubmissions.push(i);
+                    
+                    // Small delay between submissions
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                } catch (error) {
+                    console.error('Queue sync error:', error);
+                    break; // Stop processing on first error
+                }
+            }
+
+            // Remove successfully submitted items
+            if (successfulSubmissions.length > 0) {
+                const remainingQueue = queue.filter((_, index) => 
+                    !successfulSubmissions.includes(index)
+                );
+                localStorage.setItem(QUEUE_KEY, JSON.stringify(remainingQueue));
+                
+                showMessage(`✅ Synced ${successfulSubmissions.length} feedback(s) successfully!`, 'success');
+            }
+
+            isSyncing = false;
+            updateConnectionStatus();
+            loadQueueStatus();
+        }
+
+        // UI helpers
+        function showMessage(text, type) {
+            statusMessage.textContent = text;
+            statusMessage.className = `queue-status ${type === 'success' ? 'success-message' : 
+                                     type === 'error' ? 'error-message' : ''}`;
+            statusMessage.style.display = 'block';
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                statusMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        // Periodic sync check (every 30 seconds when online)
+        setInterval(() => {
+            if (isOnline && !isSyncing) {
+                processQueue();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
+
+<!-- AKfycbwaPA6--0679XTb0opSxTPt0mG8hMpaHHIDpTP58yxGH0Ad48Kwih7hk8QN04NK6fXt -->
+
+<!-- https://script.google.com/macros/s/AKfycbwaPA6--0679XTb0opSxTPt0mG8hMpaHHIDpTP58yxGH0Ad48Kwih7hk8QN04NK6fXt/exec -->
