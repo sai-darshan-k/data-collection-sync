@@ -102,7 +102,8 @@
 
         input[type="text"],
         input[type="email"],
-        input[type="tel"],
+        input[type
+="tel"],
         select,
         textarea {
             width: 100%;
@@ -405,7 +406,7 @@
                 method: 'POST',
                 mode: 'cors',
                 headers: {
-                    'Content-Type': 'text/plain;charset=utf-8',
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(data)
             });
@@ -414,7 +415,12 @@
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            return response.json();
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.error || 'Failed to submit to Google Sheets');
+            }
+
+            return result;
         }
 
         // Queue management
