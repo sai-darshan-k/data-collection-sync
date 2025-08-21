@@ -401,11 +401,6 @@
                 throw new Error('Google Apps Script URL not configured');
             }
 
-            // Check if running locally
-            if (window.location.protocol === 'file:') {
-                throw new Error('Cannot sync from file:// protocol. Please use a web server.');
-            }
-
             const response = await fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'cors',
