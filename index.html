@@ -405,7 +405,7 @@
                 method: 'POST',
                 mode: 'cors',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'text/plain;charset=utf-8',
                 },
                 body: JSON.stringify(data)
             });
@@ -453,6 +453,7 @@
             updateConnectionStatus();
 
             const successfulSubmissions = [];
+            const failedSubmissions = [];
             
             for (let i = 0; i < queue.length; i++) {
                 try {
@@ -462,19 +463,22 @@
                     // Small delay between submissions
                     await new Promise(resolve => setTimeout(resolve, 500));
                 } catch (error) {
-                    console.error('Queue sync error:', error);
-                    break; // Stop processing on first error
+                    console.error(`Queue sync error for item ${i}:`, error);
+                    failedSubmissions.push(i);
                 }
             }
 
             // Remove successfully submitted items
-            if (successfulSubmissions.length > 0) {
-                const remainingQueue = queue.filter((_, index) => 
-                    !successfulSubmissions.includes(index)
-                );
+            if (successfulSubmissions.length > 0 || failedSubmissions.length > 0) {
+                const remainingQueue = queue.filter((_, index) => failedSubmissions.includes(index));
                 localStorage.setItem(QUEUE_KEY, JSON.stringify(remainingQueue));
                 
-                showMessage(`✅ Synced ${successfulSubmissions.length} feedback(s) successfully!`, 'success');
+                if (successfulSubmissions.length > 0) {
+                    showMessage(`✅ Synced ${successfulSubmissions.length} feedback(s) successfully!`, 'success');
+                }
+                if (failedSubmissions.length > 0) {
+                    showMessage(`⚠️ ${failedSubmissions.length} feedback(s) failed to sync. Will retry later.`, 'error');
+                }
             }
 
             isSyncing = false;
