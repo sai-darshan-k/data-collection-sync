@@ -102,8 +102,7 @@
 
         input[type="text"],
         input[type="email"],
-        input[type
-="tel"],
+        input[type="tel"],
         select,
         textarea {
             width: 100%;
@@ -298,7 +297,7 @@
 
     <script>
         // Configuration - Replace with your Google Apps Script Web App URL
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwaPA6--0679XTb0opSxTPt0mG8hMpaHHIDpTP58yxGH0Ad48Kwih7hk8QN04NK6fXt/exec';
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwypH5G8lTTtq_eEdeMsrVpcB0jUtnJejvsZxSnrRfVaEBrsq6GL2XMUF1mOUoWcoor/exec';
         
         // App state
         let isOnline = navigator.onLine;
@@ -402,25 +401,18 @@
                 throw new Error('Google Apps Script URL not configured');
             }
 
-            const response = await fetch(GOOGLE_SCRIPT_URL, {
+            await fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
-                mode: 'cors',
+                mode: 'no-cors',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(data)
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const result = await response.json();
-            if (!result.success) {
-                throw new Error(result.error || 'Failed to submit to Google Sheets');
-            }
-
-            return result;
+            // Since mode is 'no-cors', we cannot check response status or body
+            // Assume success unless a network error occurs
+            return { success: true };
         }
 
         // Queue management
